@@ -1,16 +1,17 @@
-"""
-Main entry point for the product matching service
-"""
+"""Main entry point for the product matching service"""
 
 import sys
 import json
 
 from config.default_config import get_config
 from src.text.processor import TextProcessor
-from src.strategies import QueryStrategyFactory, ConfidenceScorerFactory, ScorerStrategyType
+from src.strategies.query import QueryStrategyFactory
+from src.strategies.scorer import ConfidenceScorerFactory
+from src.strategies import ScorerStrategyType
 from src.services.matcher import ProductMatchingService
 from src.services.search import AlibabaSearchService
 from src.utils.logging_config import setup_logging
+from src.utils.visualization import plot_confidence_distributions, plot_threshold_impact
 
 def create_matching_service(config):
     """Create and configure the product matching service"""
@@ -45,7 +46,7 @@ def main():
     
     # Find matches
     results = matcher.find_matches(
-        config['amazon_items_file'],
+        config['input_file'],
         confidence_threshold=config['confidence_threshold'],
         max_products=config['max_products']
     )
@@ -59,6 +60,12 @@ def main():
         
         # Analyze threshold impact
         matcher.analyze_threshold_impact(results)
+        
+        # Generate visualization plots
+        plot_confidence_distributions(results)
+        plot_threshold_impact(results)
+        
+        logger.info("Generated visualization plots in the 'plots' directory")
     else:
         logger.error("Failed to find matches")
         sys.exit(1)

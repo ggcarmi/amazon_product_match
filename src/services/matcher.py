@@ -11,7 +11,6 @@ from src.text.processor import TextProcessor
 from src.strategies.query import QueryStrategy, QueryStrategyFactory
 from src.strategies.scorer import ConfidenceScorer
 from src.services.search import AlibabaSearchService
-from src.utils.visualization import plot_confidence_distributions
 
 logger = logging.getLogger("ProductMatcher")
 
@@ -90,9 +89,7 @@ class ProductMatchingService:
         
         # Process each Amazon item
         for idx, (asin, amazon_item) in enumerate(amazon_items_to_process, 1):
-            logger.info(f"\n\n [Iteration {idx}/{len(amazon_items_to_process)}] Processing Amazon product:")
-            logger.info(f"ASIN: {asin}")
-            logger.info(f"Title: {amazon_item.get('title', '')}")
+            logger.info(f"\n\n Processing item {idx}/{len(amazon_items_to_process)}: {asin} - {amazon_item.get('title', '')[:50]}...")
             
             # Track product-specific results
             product_data = {
@@ -230,9 +227,6 @@ class ProductMatchingService:
             'all_products_data': all_products_data,
             'match_stats': self.match_stats
         }
-        
-        # Generate confidence score distribution plot
-        plot_confidence_distributions(results)
         
         return results
 

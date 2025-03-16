@@ -82,3 +82,57 @@ def plot_confidence_distributions(results: Dict[str, Any]) -> None:
         logger.info(f"Plot statistics: {len(all_scores)} total scores, {len(match_scores)} matches, {len(non_match_scores)} non-matches")
     except Exception as e:
         logger.error(f"Error saving confidence distribution plot: {str(e)}")
+
+def plot_threshold_impact(results: Dict[str, Any], thresholds: List[float] = None) -> None:
+    """Plot the impact of different confidence thresholds on match counts"""
+    if thresholds is None:
+        thresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    
+    all_products = results['all_products_data']
+    total_products = len(all_products)
+    
+    # Calculate matches at each threshold
+    threshold_matches = []
+    for threshold in thresholds:
+        matches = sum(1 for product in all_products
+                     if product.get('all_candidates') 
+                     and product['all_candidates'][0]['confidence'] >= threshold)
+        threshold_matches.append(matches)
+    
+    # Create figure
+    fig = go.Figure()
+    
+    # Add line plot
+    fig.add_trace(go.Scatter(
+        x=thresholds,
+        y=threshold_matches,
+        mode='lines+markers',
+        name='Number of Matches',
+        hovertemplate='Threshold: %{x:.2f}<br>Matches: %{y}<br>Match Rate: %{text:.1%}<extra></extra>',
+        text=[count/total_products for count in threshold_matches]
+    ))
+    
+    # Update layout
+    fig.update_layout(
+        title='Impact of Confidence Threshold on Match Count',
+        xaxis_title='Confidence Threshold',
+        yaxis_title='Number of Matches',
+        showlegend=True
+    )
+    
+    # Create plots directory if it doesn't exist
+    plots_dir = 'plots'
+    os.makedirs(plots_dir, exist_ok=True)
+    
+    # Generate timestamp for unique filename
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    plot_filename = f'threshold_impact_{timestamp}.html'
+    plot_path = os.path.join(plots_dir, plot_filename)
+    
+    # Save the plot
+    try:
+        fig.write_html(plot_path)
+        logger.info(f"Successfully generated threshold impact plot: {plot_path}")
+        logger.info(f"Analyzed {len(thresholds)} threshold values from {min(thresholds)} to {max(thresholds)}")
+    except Exception as e:
+        logger.error(f"Error saving threshold impact plot: {str(e)}")

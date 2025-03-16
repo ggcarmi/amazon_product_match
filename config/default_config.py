@@ -3,6 +3,7 @@ Default configuration settings for product matching system
 """
 
 from src.strategies import QueryStrategyType, ScorerStrategyType
+from typing import Dict, Any
 
 DEFAULT_CONFIG = {
     # Strategy settings
@@ -10,14 +11,15 @@ DEFAULT_CONFIG = {
     'confidence_scorer_type': ScorerStrategyType.HYBRID.value,
     
     # Matching parameters
-    'confidence_threshold': 0.52,
+    'confidence_threshold': 0.55,
     'save_all_candidates': True,
     'max_results_per_product': 50,
-    'max_products': 5,  # Default to 5 products for debugging
+    'max_products': 374,  # Default to 5 products for debugging
     
     # File paths
-    'amazon_items_file': 'data/amazon_items.json',  # Changed from input_file to match main.py
-    'output_file': 'data/matches/amazon_alibaba_matches.json',  # Added output_file path
+    'input_file': 'data/amazon_items.json',
+    'output_dir': 'data/matches',
+    'output_file': 'data/matches/product_matches.json',
     'log_file': 'product_matching.log',
     
     # Logging
@@ -27,6 +29,10 @@ DEFAULT_CONFIG = {
     }
 }
 
-def get_config():
-    """Get the configuration settings"""
-    return DEFAULT_CONFIG
+def get_config() -> Dict[str, Any]:
+    """Get the default configuration settings
+    
+    Returns:
+        Dict[str, Any]: The configuration dictionary
+    """
+    return DEFAULT_CONFIG.copy()
