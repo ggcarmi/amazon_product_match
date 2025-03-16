@@ -10,7 +10,7 @@ DEFAULT_CONFIG = {
     'confidence_scorer_type': ScorerStrategyType.HYBRID.value,
     
     # Matching parameters
-    'confidence_threshold': 0.6,
+    'confidence_threshold': 0.52,
     'save_all_candidates': True,
     'max_results_per_product': 50,
     'max_products': 5,  # Default to 5 products for debugging

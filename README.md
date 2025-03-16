@@ -1,5 +1,13 @@
 # Harmonya Data Task - Product Matching Solution
 
+## TLDR
+An intelligent product matching system that finds equivalent products between Amazon and Alibaba using advanced text analysis and similarity scoring. The system provides confidence scores for each match to help identify the most reliable product pairs.
+
+### Quick Start with Docker
+```bash
+docker build -t product-matcher . && docker run product-matcher
+```
+
 ## Overview
 This project develops a solution to match Amazon products with their Alibaba counterparts using text-based analysis, and provides a confidence score for each match. The goal is to determine if an Amazon product can be found on Alibaba and with what degree of certainty.
 
@@ -11,128 +19,6 @@ This project develops a solution to match Amazon products with their Alibaba cou
 3. **Confidence Scoring**: Evaluating match quality
 4. **Threshold Decision**: Determining whether a match is valid
 
-## Object-Oriented Design
-
-The solution implements several design patterns to ensure a maintainable, extensible architecture:
-
-### 1. Strategy Pattern
-Used in two key areas:
-- **Query Generation**: Different strategies for constructing search queries
-- **Confidence Scoring**: Various approaches to evaluate match quality
-
-```
-┌─────────────────┐          ┌───────────────────┐
-│                 │          │                   │
-│  Client Code    │◄─────────┤  Strategy         │
-│                 │          │  Interface        │
-└────────┬────────┘          └─────────┬─────────┘
-         │                             ▲
-         │                             │
-         │                   ┌─────────┼─────────┐
-         │                   │         │         │
-         │           ┌───────┴───┐ ┌───┴─────┐ ┌─┴────────┐
-         │           │           │ │         │ │          │
-         └───────────► Strategy A │ │Strategy B│ │Strategy C│
-                     │           │ │         │ │          │
-                     └───────────┘ └─────────┘ └──────────┘
-```
-
-### 2. Factory Pattern
-Responsible for creating strategy objects without exposing implementation details:
-- **QueryStrategyFactory**: Creates query generation strategies
-- **ConfidenceScorerFactory**: Creates confidence scoring strategies
-
-```
-┌────────────┐     creates      ┌───────────┐
-│            │  ─────────────►  │           │
-│   Factory  │                  │  Product  │
-│            │  ◄─────────────  │           │
-└────────────┘     returns      └───────────┘
-```
-
-### 3. Facade Pattern
-Simplifies interaction with the complex subsystem:
-- **ProductMatchingFacade**: Provides a simple interface to the entire matching system
-
-```
-       ┌───────────────┐
-       │  Client Code  │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐         ┌─────────────┐
-       │               │         │             │
-       │    Facade     │───────► │ Subsystem A │
-       │               │         │             │
-       └───────┬───────┘         └─────────────┘
-               │                        ▲
-               │                        │
-               │                 ┌──────┴──────┐
-               │                 │             │
-               └────────────────►│ Subsystem B │
-                                 │             │
-                                 └─────────────┘
-```
-
-### 4. Service Layer Pattern
-Encapsulates business logic and application services:
-- **ProductMatchingService**: Orchestrates the product matching workflow
-- **AlibabaSearchService**: Handles interaction with external search API
-
-### Class Diagram
-
-```
-┌──────────────────┐     ┌───────────────────┐     ┌─────────────────────┐
-│                  │     │                   │     │                     │
-│  TextProcessor   │◄────┤  QueryStrategy    │◄────┤  QueryStrategyFactory│
-│                  │     │    (abstract)     │     │                     │
-└──────────────────┘     └───────────────────┘     └─────────────────────┘
-         ▲                        ▲
-         │                        │
-         │                ┌───────┴─────────────────────┐
-         │                │                             │
-         │        ┌───────────────┐           ┌─────────────────┐
-         │        │               │           │                 │
-         │        │BrandModel     │           │CategoryEnhanced │
-         │        │QueryStrategy  │           │QueryStrategy    │
-         │        │               │           │                 │
-         │        └───────────────┘           └─────────────────┘
-┌────────┴───────┐
-│                │
-│ConfidenceScorer│
-│  (abstract)    │◄──────────┐
-│                │           │
-└────────────────┘           │
-        ▲           ┌────────┴───────────┐
-        │           │                    │
-        │           │ConfidenceScorer    │
-┌───────┴────────┐  │Factory             │
-│                │  │                    │
-│HybridScorer    │  └────────────────────┘
-│                │
-└────────────────┘
-        ▲
-        │           ┌────────────────────┐
-        │           │                    │
-        │           │ProductMatching     │
-        │           │Facade              │
-        └───────────┤                    │
-                    └─────────┬──────────┘
-                              │
-                    ┌─────────▼──────────┐
-                    │                    │
-                    │ProductMatching     │
-                    │Service             │
-                    │                    │
-                    └─────────┬──────────┘
-                              │
-                    ┌─────────▼──────────┐
-                    │                    │
-                    │AlibabaSearch       │
-                    │Service             │
-                    │                    │
-                    └────────────────────┘
-```
 
 ## Approach and Methodology
 
@@ -223,30 +109,6 @@ The weighted combination of these factors produces a score between 0 and 1, wher
 - **0.4-0.59**: Medium confidence (possibly related products)
 - **<0.4**: Low confidence (likely different products)
 
-### Threshold Visualization
-
-```
-Confidence Score Distribution
-────────────────────────────────────
-│                                  │
-│                                  │
-│                                  │
-│         ┌───┐                    │
-│         │   │                    │
-│         │   │                    │
-│     ┌───┤   │                    │
-│     │   │   │                    │
-│     │   │   │   ┌───┐            │
-│     │   │   │   │   │            │
-│ ┌───┤   │   │   │   │   ┌───┐    │
-│ │   │   │   │   │   │   │   │    │
-│ │   │   │   │   │   │   │   │    │
-└─┴───┴───┴───┴───┴───┴───┴───┴────┘
-  0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
-                ▲
-           Our default
-           threshold
-```
 
 ### Adjusting the Threshold
 
@@ -332,17 +194,6 @@ User                  ProductMatchingFacade         ProductMatchingService      
    - Defines interface for scoring match quality
    - Concrete implementations with different scoring algorithms
 
-4. **Factory Classes**
-   - Create appropriate strategy instances based on configuration
-   - Allow for runtime selection of algorithms
-
-5. **Service Classes**
-   - Encapsulate business logic
-   - Provide clean interfaces for subsystem operations
-
-6. **ProductMatchingFacade**
-   - Simplifies usage of the entire system
-   - Configurable through a single configuration dictionary
 
 ## Production Considerations
 
@@ -368,9 +219,6 @@ User                  ProductMatchingFacade         ProductMatchingService      
 3. **Monitoring**: Real-time performance metrics
 4. **Testing**: Regular validation of match quality
 
-### Architecture for Production
-
-![Production Architecture](https://i.imgur.com/8WaSePf.png)
 
 #### Containerized Deployment
 
@@ -394,43 +242,93 @@ User                  ProductMatchingFacade         ProductMatchingService      
 └─────────────────────────────────────────────────┘
 ```
 
+## Production Deployment Guide
+
+### Serving in Production
+
+1. **Containerized Deployment**
+   - Utilize Docker containers for consistent environments
+   - Implement container orchestration (e.g., Kubernetes) for scalability
+   - Use rolling updates for zero-downtime deployments
+
+2. **Microservices Architecture**
+   - Split components into independent services:
+     - Query Generation Service
+     - Search Service
+     - Matching Service
+     - Confidence Scoring Service
+   - Use API Gateway for request routing and load balancing
+
+3. **Infrastructure**
+   - Deploy across multiple regions for lower latency
+   - Implement auto-scaling based on load
+   - Use managed services where possible (e.g., managed Kubernetes)
+
+### Production Challenges and Solutions
+
+1. **API Rate Limits**
+   - Challenge: Alibaba API has strict rate limits
+   - Solutions:
+     - Implement intelligent rate limiting
+     - Use request queuing and batch processing
+     - Cache frequently requested products
+     - Consider multiple API keys rotation
+
+2. **Data Consistency**
+   - Challenge: Product information changes frequently
+   - Solutions:
+     - Implement regular data synchronization
+     - Use event-driven updates
+     - Maintain version control for product data
+     - Set up data validation pipelines
+
+3. **Performance at Scale**
+   - Challenge: Processing large product catalogs
+   - Solutions:
+     - Implement caching layers (Redis/Memcached)
+     - Use database indexing strategies
+     - Optimize query patterns
+     - Consider data partitioning
+
+4. **Error Handling**
+   - Challenge: External service failures
+   - Solutions:
+     - Implement circuit breakers
+     - Use retry mechanisms with exponential backoff
+     - Maintain fallback options
+     - Set up comprehensive error logging
+
+### Customer Satisfaction Strategies
+
+1. **Reliability**
+   - Implement health checks and monitoring
+   - Set up automated failover mechanisms
+   - Maintain backup systems
+   - Regular disaster recovery testing
+
+2. **Performance Optimization**
+   - Monitor and optimize response times
+   - Implement request prioritization
+   - Use CDN for static content
+   - Regular performance audits
+
+3. **Quality Assurance**
+   - Continuous monitoring of match quality
+   - Regular validation of confidence scores
+   - A/B testing for matching algorithms
+   - Customer feedback integration
+
+4. **Support and Monitoring**
+   - 24/7 system monitoring
+   - Real-time alerting system
+   - Comprehensive logging
+   - Regular reporting and analytics
+
 ## Future Enhancements
 
 ### 1. Machine Learning Integration
 - **Feature Engineering**: Transform product attributes into feature vectors
-   ```python
-   def extract_features(product_data):
-       # Extract numerical features
-       price = float(product_data.get('price', 0))
-       title_length = len(product_data.get('title', ''))
-       
-       # Extract text features using TF-IDF
-       text_features = vectorizer.transform([product_data.get('title', '')])
-       
-       # Combine features
-       return np.concatenate([
-           [price, title_length], 
-           text_features.toarray()[0]
-       ])
-   ```
-
-- **Model Training**: Example model pipeline
-   ```python
-   from sklearn.ensemble import RandomForestClassifier
-   from sklearn.pipeline import Pipeline
-   from sklearn.preprocessing import StandardScaler
-   
-   pipeline = Pipeline([
-       ('scaler', StandardScaler()),
-       ('classifier', RandomForestClassifier(n_estimators=100))
-   ])
-   
-   # Train model on labeled matches
-   pipeline.fit(X_train, y_train)
-   
-   # Predict match probability
-   match_probability = pipeline.predict_proba(X_test)[:, 1]
-   ```
+- **Model Training**: Train a model to predict match quality
 
 ### 2. Visual Similarity Analysis
 - Extract image features using pre-trained CNNs
@@ -450,21 +348,6 @@ User                  ProductMatchingFacade         ProductMatchingService      
 - Detect statistical outliers in price comparisons
 - Example implementation:
 
-```python
-def analyze_price_correlation(amazon_price, alibaba_price, exchange_rate=1.0):
-    normalized_alibaba_price = alibaba_price * exchange_rate
-    
-    # Calculate price ratio
-    if amazon_price > 0:
-        price_ratio = normalized_alibaba_price / amazon_price
-        
-        # Higher score for closer prices
-        if 0.5 <= price_ratio <= 1.5:
-            return 1.0 - abs(1.0 - price_ratio) / 2.0
-        else:
-            return 0.0
-    return 0.0
-```
 
 ### 4. Automated Feedback Loop
 
@@ -484,28 +367,6 @@ def analyze_price_correlation(amazon_price, alibaba_price, exchange_rate=1.0):
 └───────────────┘     └─────────────┘     └──────────────┘
 ```
 
-## Similar Kaggle Competitions & Datasets
-
-### 1. [Walmart Trip Type Classification](https://www.kaggle.com/c/walmart-recruiting-trip-type-classification)
-- **Relevance**: Similar challenge of matching items across different categorization systems
-- **Key Techniques**: Feature engineering from product descriptions and categories
-- **Lessons**: Effective balancing of text features and structured data
-
-### 2. [Home Depot Product Search Relevance](https://www.kaggle.com/c/home-depot-product-search-relevance)
-- **Relevance**: Focused on search relevance, similar to our query generation challenge
-- **Key Techniques**: Advanced text preprocessing and TF-IDF weighting
-- **Lessons**: Importance of handling misspellings and variations in product descriptions
-
-### 3. [Mercari Price Suggestion Challenge](https://www.kaggle.com/c/mercari-price-suggestion-challenge)
-- **Relevance**: Involves product matching across different descriptions
-- **Key Techniques**: Text embeddings and feature extraction from product titles
-- **Winning Solutions**: Combined LSTMs with gradient boosting models
-
-### 4. [Avito Duplicate Ads Detection](https://www.kaggle.com/c/avito-duplicate-ads-detection)
-- **Relevance**: Directly applicable problem of identifying duplicate products
-- **Key Techniques**: Similarity metrics for text and images
-- **Top Approaches**: Ensemble models combining visual and textual features
-
 ## Implementation Plan
 
 ### Phase 1: Core Functionality (Week 1)
@@ -522,6 +383,7 @@ def analyze_price_correlation(amazon_price, alibaba_price, exchange_rate=1.0):
 - [x] Implement Facade pattern for simplified usage
 
 ### Phase 3: Enhancements (Weeks 3-4)
+- [ ] Regenerate new query in case Amazon product not exists on Alibaba (empty result)
 - [ ] Improve brand/model extraction with NER models
   - [ ] Research suitable NER models for product entities
   - [ ] Train or fine-tune for product domain
@@ -618,7 +480,8 @@ def create_strategy(strategy_type, text_processor):
 
 ## Conclusion
 
-This solution provides a robust framework for matching Amazon products with Alibaba counterparts. The object-oriented design with strategy and factory patterns allows for flexible expansion of functionality and easy maintenance.
+This solution provides a robust framework for matching Amazon products with Alibaba counterparts. The 
+design allows for flexible expansion of functionality and easy maintenance.
 
 Key advantages of this implementation:
 
