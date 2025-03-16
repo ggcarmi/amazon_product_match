@@ -1,4 +1,4 @@
-# Harmonya Data Task - Product Matching Solution
+# Product Matching
 
 ## TLDR
 An intelligent product matching system that finds equivalent products between Amazon and Alibaba using advanced text analysis and similarity scoring. The system provides confidence scores for each match to help identify the most reliable product pairs.
